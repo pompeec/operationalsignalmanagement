@@ -1,13 +1,14 @@
-.PHONY: install demo test interactive help
+.PHONY: install demo test interactive web help
 
 help:
 	@echo ""
 	@echo "  Signal Detector — Noise vs Signal for Program Managers"
 	@echo ""
 	@echo "  make install      Install dependencies"
-	@echo "  make demo         Run full demo against 12 mock PM scenarios"
-	@echo "  make test         Run a single quick classification"
-	@echo "  make interactive  Start interactive mode (paste items live)"
+	@echo "  make demo         Run full demo against 12 mock PM scenarios (terminal)"
+	@echo "  make test         Run a single quick classification (terminal)"
+	@echo "  make interactive  Start interactive mode — paste items live (terminal)"
+	@echo "  make web          Start the web UI at http://localhost:5000"
 	@echo ""
 	@echo "  Requires: ANTHROPIC_API_KEY in .env or environment"
 	@echo ""
@@ -25,3 +26,6 @@ test:
 
 interactive:
 	python -m signal_detector.cli interactive
+
+web:
+	python app.py
