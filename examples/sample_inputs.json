@@ -1,0 +1,86 @@
+[
+  {
+    "id": "001",
+    "source": "slack",
+    "author": "eng-lead",
+    "timestamp": "2026-04-30T09:15:00Z",
+    "text": "Heads up: the auth service is throwing 500s on roughly 5% of login attempts since 14:00 UTC yesterday. Root cause appears to be a connection pool exhaustion in the Redis layer. We have a hotfix in review but it hasn't shipped yet. This is impacting checkout for enterprise accounts."
+  },
+  {
+    "id": "002",
+    "source": "jira",
+    "author": "scrum-bot",
+    "timestamp": "2026-04-30T09:00:00Z",
+    "text": "Sprint 42 daily status: 18 of 23 story points completed. Velocity on track. No impediments reported by any team members. Stand-up notes attached."
+  },
+  {
+    "id": "003",
+    "source": "email",
+    "author": "vp-sales",
+    "timestamp": "2026-04-30T08:45:00Z",
+    "text": "The Acme Corp deal is at risk. Their CTO is asking why the SSO feature we promised in Q2 isn't on the roadmap. This is a $2.4M renewal. I need a status and a response by EOD today or we risk losing the account."
+  },
+  {
+    "id": "004",
+    "source": "slack",
+    "author": "design-lead",
+    "timestamp": "2026-04-30T08:30:00Z",
+    "text": "Just updated the shared component library Figma file with the new button styles. Nothing urgent, just FYI for anyone working on UI this sprint."
+  },
+  {
+    "id": "005",
+    "source": "jira",
+    "author": "backend-eng",
+    "timestamp": "2026-04-30T08:00:00Z",
+    "text": "I'm blocked on PROJ-441 waiting for the data-platform team to expose the new events API. I've pinged them twice this week with no response. I've been blocked for 3 days and my other tasks are done."
+  },
+  {
+    "id": "006",
+    "source": "email",
+    "author": "calendar-bot",
+    "timestamp": "2026-04-29T17:00:00Z",
+    "text": "Reminder: Sprint Review meeting rescheduled from Thursday 2pm to Friday 3pm due to a conflict with the all-hands. Zoom link unchanged."
+  },
+  {
+    "id": "007",
+    "source": "slack",
+    "author": "staff-eng",
+    "timestamp": "2026-04-30T09:45:00Z",
+    "text": "I scoped the real-time sync feature the sales team requested. It's doable but adds 3–4 weeks of work. I started on a design doc and plan to just build it since it seems important. Wanted to give you a heads up."
+  },
+  {
+    "id": "008",
+    "source": "confluence",
+    "author": "data-team",
+    "timestamp": "2026-04-30T07:00:00Z",
+    "text": "Weekly data pipeline health report: all jobs completed within SLA. No data quality issues detected. Pipeline latency improved 12% vs last week. Full metrics in the dashboard."
+  },
+  {
+    "id": "009",
+    "source": "slack",
+    "author": "infra-lead",
+    "timestamp": "2026-04-30T10:00:00Z",
+    "text": "Production Kubernetes cluster is running at 94% CPU on the web tier. If we hit the same traffic spike as last Friday, we're likely to see OOM kills. Cluster autoscaler is enabled but provisioning takes ~8 min. We should consider pre-scaling before the weekend."
+  },
+  {
+    "id": "010",
+    "source": "jira",
+    "author": "pm-coord",
+    "timestamp": "2026-04-29T16:30:00Z",
+    "text": "Reminder: please update your JIRA tickets before the sprint ends on Friday. Unupdated tickets will be auto-moved to the next sprint."
+  },
+  {
+    "id": "011",
+    "source": "slack",
+    "author": "finance-ops",
+    "timestamp": "2026-04-30T09:30:00Z",
+    "text": "The AWS budget for Q2 is already at 78% with two months left. At current burn rate we'll overshoot by ~$45K. The ML training jobs added in April are the main driver. We need approval or a plan before the Q2 board report."
+  },
+  {
+    "id": "012",
+    "source": "email",
+    "author": "legal",
+    "timestamp": "2026-04-29T15:00:00Z",
+    "text": "FYI: our standard contractor agreement template has been updated to reflect the new IP assignment clauses. Please use the new template (linked) for any new contractor engagements going forward. No action needed for existing contracts."
+  }
+]
