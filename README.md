@@ -2,6 +2,30 @@
 
 Cut through the noise. Surface what matters.
 
+---
+
+## Clone and Run in 3 Steps
+
+```bash
+# 1. Clone and enter the repo
+git clone https://github.com/pompeec/operationalsignalmanagement.git
+cd operationalsignalmanagement
+git checkout claude/noise-signal-detection-LqfVo
+
+# 2. Install dependencies
+pip install -r requirements.txt
+
+# 3. Add your Anthropic API key and run the demo
+echo "ANTHROPIC_API_KEY=your_key_here" > .env
+make demo
+```
+
+That's it. You'll see a full signal/noise digest of 12 realistic PM scenarios — signals prioritized, noise filtered, executive summary and top actions generated.
+
+> Don't have an API key? Get one free at [console.anthropic.com](https://console.anthropic.com)
+
+---
+
 Signal Detector uses Claude AI to classify the stream of updates, tickets, Slack messages, and status reports that PMs and PgMs receive every day into two buckets: **signal** (requires action) and **noise** (can be safely deprioritized).
 
 ---
