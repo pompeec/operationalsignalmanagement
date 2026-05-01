@@ -72,11 +72,13 @@ HTML = """<!DOCTYPE html>
   th { text-align: left; padding: 8px 12px; color: #64748b; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #2d3148; }
   td { padding: 10px 12px; border-bottom: 1px solid #1e2438; vertical-align: top; line-height: 1.5; }
   tr:last-child td { border-bottom: none; }
-  .p-badge { display: inline-block; width: 28px; height: 28px; border-radius: 50%; font-weight: 700; font-size: 0.85rem; text-align: center; line-height: 28px; }
-  .p-critical { background: #7f1d1d; color: #fca5a5; }
-  .p-high     { background: #78350f; color: #fcd34d; }
-  .p-medium   { background: #1e3a5f; color: #93c5fd; }
-  .p-low      { background: #1a2535; color: #64748b; }
+  .p-badge { display: inline-flex; align-items: center; justify-content: center; padding: 3px 8px; border-radius: 6px; font-weight: 800; font-size: 0.78rem; white-space: nowrap; gap: 3px; }
+  .p-p0 { background: #450a0a; color: #fca5a5; border: 1px solid #7f1d1d; }
+  .p-p1 { background: #431407; color: #fb923c; border: 1px solid #7c2d12; }
+  .p-p2 { background: #422006; color: #fcd34d; border: 1px solid #78350f; }
+  .p-p3 { background: #1a2535; color: #64748b; border: 1px solid #2d3148; }
+  .severity-legend { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; font-size: 0.75rem; color: #475569; align-items: center; }
+  .severity-legend span { display: flex; align-items: center; gap: 4px; }
   .cat-tag { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
   .cat-blocker    { background: #450a0a; color: #fca5a5; }
   .cat-escalation { background: #450a0a; color: #fca5a5; }
@@ -91,9 +93,11 @@ HTML = """<!DOCTYPE html>
   .noise-label { font-size: 0.72rem; font-weight: 600; color: #334155; background: #1e293b; padding: 2px 8px; border-radius: 10px; white-space: nowrap; align-self: flex-start; margin-top: 2px; }
   .src-tag { font-size: 0.72rem; color: #334155; font-weight: 500; }
   .stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
-  .stat { background: #0f1117; border: 1px solid #2d3148; border-radius: 8px; padding: 12px 20px; text-align: center; }
-  .stat-num { font-size: 1.5rem; font-weight: 700; }
-  .stat-lbl { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .stat { background: #0f1117; border: 1px solid #2d3148; border-radius: 10px; padding: 16px 12px; text-align: center; }
+  .stat-num { font-size: 2rem; font-weight: 800; line-height: 1; }
+  .stat-lbl { font-size: 0.72rem; color: #64748b; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+  .stat-sub { font-size: 0.7rem; color: #334155; margin-top: 2px; }
   .limit-bar { background: #1e293b; border: 1px solid #2d3148; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; font-size: 0.85rem; color: #94a3b8; display: flex; align-items: center; gap: 10px; }
   .limit-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; flex-shrink: 0; }
   .limit-dot.warn { background: #fbbf24; }
@@ -137,9 +141,9 @@ Staff eng building real-time sync without PM sign-off, adds 3-4 weeks to scope">
   <div id="results" class="card">
     <div class="stats">
       <div class="stat"><div class="stat-num blue" id="stat-total">0</div><div class="stat-lbl">Items Reviewed</div></div>
-      <div class="stat"><div class="stat-num red"  id="stat-signals">0</div><div class="stat-lbl">Signals</div></div>
-      <div class="stat"><div class="stat-num green" id="stat-noise">0</div><div class="stat-lbl">Noise</div></div>
-      <div class="stat"><div class="stat-num yellow" id="stat-critical">0</div><div class="stat-lbl">Critical (P8+)</div></div>
+      <div class="stat"><div class="stat-num red" id="stat-signals">0</div><div class="stat-lbl">Signals</div><div class="stat-sub">Requires action</div></div>
+      <div class="stat"><div class="stat-num green" id="stat-noise">0</div><div class="stat-lbl">Noise</div><div class="stat-sub">No action needed</div></div>
+      <div class="stat"><div class="stat-num" style="color:#fb923c" id="stat-critical">0</div><div class="stat-lbl">P0 / P1</div><div class="stat-sub">Critical signals</div></div>
     </div>
 
     <h2>Executive Summary</h2>
@@ -149,12 +153,18 @@ Staff eng building real-time sync without PM sign-off, adds 3-4 weeks to scope">
     <div class="actions-box"><ol id="top-actions"></ol></div>
 
     <h2>🔴 Signals — Requires Attention</h2>
+    <div class="severity-legend">
+      Severity: <span><span class="p-badge p-p0">P0</span> Active blocker / escalation — act within hours</span>
+      <span><span class="p-badge p-p1">P1</span> High risk — act today</span>
+      <span><span class="p-badge p-p2">P2</span> Medium — act this week</span>
+      <span><span class="p-badge p-p3">P3</span> Low — monitor</span>
+    </div>
     <table id="signals-table">
-      <thead><tr><th>P</th><th>Category</th><th>Summary</th><th>Recommended Action</th><th>Source</th></tr></thead>
+      <thead><tr><th>Severity</th><th>Category</th><th>What happened</th><th>Recommended Action</th><th>Source</th></tr></thead>
       <tbody id="signals-body"></tbody>
     </table>
 
-    <h3>🟢 Noise — No Immediate Action</h3>
+    <h3>🟢 Noise — Reviewed, No Action Needed</h3>
     <div id="noise-list"></div>
   </div>
 </main>
@@ -173,11 +183,11 @@ const CAT_LABEL = {
   duplicate_info:'Duplicate Info', low_priority:'Low Priority', informational:'Informational'
 };
 
-function priorityClass(p) {
-  if (p >= 9) return 'p-critical';
-  if (p >= 7) return 'p-high';
-  if (p >= 5) return 'p-medium';
-  return 'p-low';
+function severityLabel(p) {
+  if (p >= 9) return { cls: 'p-p0', label: 'P0 Critical' };
+  if (p >= 7) return { cls: 'p-p1', label: 'P1 High' };
+  if (p >= 5) return { cls: 'p-p2', label: 'P2 Medium' };
+  return { cls: 'p-p3', label: 'P3 Low' };
 }
 
 async function analyze() {
@@ -230,9 +240,10 @@ function renderReport(r) {
   tbody.innerHTML = '';
   r.signals.forEach(s => {
     const catKey = s.signal_category || '';
+    const sev = severityLabel(s.priority);
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><span class="p-badge ${priorityClass(s.priority)}">${s.priority}</span></td>
+      <td><span class="p-badge ${sev.cls}">${sev.label}</span></td>
       <td><span class="cat-tag ${CAT_CLASS[catKey]||''}">${CAT_LABEL[catKey]||catKey}</span></td>
       <td>${s.summary}</td>
       <td>${s.recommended_action||'—'}</td>
