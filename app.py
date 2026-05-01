@@ -12,6 +12,7 @@ from flask import Flask, jsonify, render_template_string, request
 load_dotenv()
 
 app = Flask(__name__)
+app.config["TIMEOUT"] = 120
 
 MOCK_ITEMS = [
     {"id": "001", "source": "pagerduty", "text": "Payments service timing out for all EU users since 14:47 UTC — 100% failure rate on /api/payments"},
@@ -174,15 +175,19 @@ async function analyze() {
     .map(t => t.trim()).filter(Boolean)
     .map((text, i) => ({ id: String(i+1).padStart(3,'0'), text }));
 
-  setStatus('<span class="spinner"></span>Analyzing ' + items.length + ' item(s) with Claude...');
+  setStatus('<span class="spinner"></span>Analyzing ' + items.length + ' item(s) in parallel with Claude — usually 10–20s...');
   document.getElementById('results').style.display = 'none';
 
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 120000);
     const res = await fetch('/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items })
+      body: JSON.stringify({ items }),
+      signal: controller.signal
     });
+    clearTimeout(timeout);
     const data = await res.json();
     if (data.error) { setStatus('Error: ' + data.error); return; }
     renderReport(data);

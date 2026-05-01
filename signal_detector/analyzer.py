@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import uuid
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
 import anthropic
@@ -171,11 +171,15 @@ class SignalAnalyzer:
         tool_input = self._extract_tool_input(response)
         return self._build_analyzed_item(item, tool_input)
 
-    def analyze_batch(self, items: list[InputItem]) -> AnalysisReport:
-        """Classify a batch of items and produce a full analysis report."""
-        analyzed: list[AnalyzedItem] = []
-        for item in items:
-            analyzed.append(self.analyze_item(item))
+    def analyze_batch(self, items: list[InputItem], max_workers: int = 5) -> AnalysisReport:
+        """Classify a batch of items in parallel and produce a full analysis report."""
+        analyzed: list[AnalyzedItem] = [None] * len(items)  # type: ignore[list-item]
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {executor.submit(self.analyze_item, item): i for i, item in enumerate(items)}
+            for future in as_completed(futures):
+                idx = futures[future]
+                analyzed[idx] = future.result()
 
         signals = sorted(
             [a for a in analyzed if a.is_signal],
