@@ -63,9 +63,21 @@ HTML = """<!DOCTYPE html>
   #status { font-size: 0.85rem; color: #64748b; margin-top: 12px; min-height: 20px; }
   #results { display: none; }
   .summary-box { background: #0f1117; border-left: 4px solid #3b4fd8; border-radius: 0 8px 8px 0; padding: 16px 20px; margin-bottom: 20px; line-height: 1.7; font-size: 0.95rem; }
-  .actions-box { background: #0f1117; border-left: 4px solid #eab308; border-radius: 0 8px 8px 0; padding: 16px 20px; margin-bottom: 24px; }
-  .actions-box ol { padding-left: 20px; }
-  .actions-box li { padding: 4px 0; line-height: 1.6; font-size: 0.95rem; }
+  .actions-box { background: #0f1117; border-radius: 10px; padding: 4px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 6px; }
+  .action-item { display: flex; align-items: flex-start; gap: 14px; padding: 14px 16px; border-radius: 8px; border: 1px solid #1e2438; background: #0f1117; }
+  .action-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem; flex-shrink: 0; }
+  .action-num.a1 { background: #450a0a; color: #fca5a5; border: 1px solid #7f1d1d; }
+  .action-num.a2 { background: #431407; color: #fb923c; border: 1px solid #7c2d12; }
+  .action-num.a3 { background: #422006; color: #fcd34d; border: 1px solid #78350f; }
+  .action-num.a4 { background: #0c2340; color: #93c5fd; border: 1px solid #1e3a5f; }
+  .action-num.a5 { background: #0c2340; color: #93c5fd; border: 1px solid #1e3a5f; }
+  .action-body { flex: 1; }
+  .action-urgency { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 3px; }
+  .action-urgency.u1 { color: #f87171; }
+  .action-urgency.u2 { color: #fb923c; }
+  .action-urgency.u3 { color: #fbbf24; }
+  .action-urgency.u4 { color: #60a5fa; }
+  .action-text { font-size: 0.9rem; line-height: 1.5; color: #e2e8f0; }
   /* Health banner */
   .health-banner { border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; display: flex; align-items: center; gap: 20px; }
   .health-banner.red    { background: #1a0505; border: 1px solid #7f1d1d; }
@@ -201,7 +213,7 @@ Staff eng building real-time sync without PM sign-off, adds 3-4 weeks to scope">
 
     <!-- Top actions -->
     <h2>Top Actions for Today</h2>
-    <div class="actions-box"><ol id="top-actions"></ol></div>
+    <div class="actions-box" id="top-actions"></div>
 
     <h2>🔴 Signals — Requires Attention</h2>
     <div class="severity-legend">
@@ -347,11 +359,23 @@ function renderReport(r) {
     kpList.appendChild(li);
   });
 
-  // Top actions
-  const ol = document.getElementById('top-actions');
-  ol.innerHTML = '';
-  (r.top_actions || []).forEach(a => {
-    const li = document.createElement('li'); li.textContent = a; ol.appendChild(li);
+  // Top actions — color-coded by rank
+  const urgencyLabels = ['Act Now', 'Act Today', 'Act This Week', 'Schedule', 'Monitor'];
+  const actionsBox = document.getElementById('top-actions');
+  actionsBox.innerHTML = '';
+  (r.top_actions || []).forEach((a, i) => {
+    const rank = Math.min(i + 1, 5);
+    const uClass = 'u' + Math.min(rank, 4);
+    const aClass = 'a' + rank;
+    const div = document.createElement('div');
+    div.className = 'action-item';
+    div.innerHTML = `
+      <div class="action-num ${aClass}">${rank}</div>
+      <div class="action-body">
+        <div class="action-urgency ${uClass}">${urgencyLabels[i] || 'Action'}</div>
+        <div class="action-text">${a}</div>
+      </div>`;
+    actionsBox.appendChild(div);
   });
 
   const tbody = document.getElementById('signals-body');
