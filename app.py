@@ -66,6 +66,29 @@ HTML = """<!DOCTYPE html>
   .actions-box { background: #0f1117; border-left: 4px solid #eab308; border-radius: 0 8px 8px 0; padding: 16px 20px; margin-bottom: 24px; }
   .actions-box ol { padding-left: 20px; }
   .actions-box li { padding: 4px 0; line-height: 1.6; font-size: 0.95rem; }
+  /* Health banner */
+  .health-banner { border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; display: flex; align-items: center; gap: 20px; }
+  .health-banner.red    { background: #1a0505; border: 1px solid #7f1d1d; }
+  .health-banner.yellow { background: #1a1005; border: 1px solid #78350f; }
+  .health-banner.green  { background: #051a0a; border: 1px solid #14532d; }
+  .health-icon { font-size: 2.5rem; line-height: 1; }
+  .health-text h3 { font-size: 1.1rem; font-weight: 800; margin: 0 0 4px; text-transform: none; letter-spacing: 0; color: #fff; }
+  .health-text p  { font-size: 0.85rem; color: #94a3b8; margin: 0; }
+  /* Progress bar */
+  .signal-bar-wrap { margin-bottom: 24px; }
+  .signal-bar-label { display: flex; justify-content: space-between; font-size: 0.78rem; color: #64748b; margin-bottom: 6px; }
+  .signal-bar-track { background: #1e293b; border-radius: 99px; height: 10px; overflow: hidden; display: flex; }
+  .signal-bar-fill  { background: linear-gradient(90deg, #ef4444, #f97316); border-radius: 99px; transition: width 0.6s ease; }
+  .noise-bar-fill   { background: #1e3a2a; border-radius: 99px; }
+  /* Key points list */
+  .key-points { list-style: none; padding: 0; margin: 0 0 24px; display: flex; flex-direction: column; gap: 8px; }
+  .key-points li { display: flex; gap: 10px; align-items: flex-start; font-size: 0.9rem; line-height: 1.5; padding: 10px 14px; border-radius: 8px; background: #0f1117; border: 1px solid #1e2438; }
+  .key-points li .kp-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+  /* Category breakdown */
+  .cat-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+  .cat-chip { display: flex; align-items: center; gap: 6px; background: #0f1117; border: 1px solid #2d3148; border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; }
+  .cat-chip-count { font-weight: 800; font-size: 1rem; }
+  .cat-chip-label { color: #94a3b8; }
   h2 { font-size: 1rem; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
   h3 { font-size: 0.9rem; font-weight: 600; color: #94a3b8; margin: 20px 0 12px; text-transform: uppercase; letter-spacing: 0.05em; }
   table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
@@ -139,16 +162,44 @@ Staff eng building real-time sync without PM sign-off, adds 3-4 weeks to scope">
   </div>
 
   <div id="results" class="card">
-    <div class="stats">
-      <div class="stat"><div class="stat-num blue" id="stat-total">0</div><div class="stat-lbl">Items Reviewed</div></div>
-      <div class="stat"><div class="stat-num red" id="stat-signals">0</div><div class="stat-lbl">Signals</div><div class="stat-sub">Requires action</div></div>
-      <div class="stat"><div class="stat-num green" id="stat-noise">0</div><div class="stat-lbl">Noise</div><div class="stat-sub">No action needed</div></div>
-      <div class="stat"><div class="stat-num" style="color:#fb923c" id="stat-critical">0</div><div class="stat-lbl">P0 / P1</div><div class="stat-sub">Critical signals</div></div>
+
+    <!-- Health banner -->
+    <div id="health-banner" class="health-banner">
+      <div class="health-icon" id="health-icon"></div>
+      <div class="health-text">
+        <h3 id="health-title"></h3>
+        <p id="health-sub"></p>
+      </div>
     </div>
 
-    <h2>Executive Summary</h2>
-    <div class="summary-box" id="summary"></div>
+    <!-- Signal ratio bar -->
+    <div class="signal-bar-wrap">
+      <div class="signal-bar-label">
+        <span id="bar-signal-pct"></span>
+        <span id="bar-noise-pct"></span>
+      </div>
+      <div class="signal-bar-track">
+        <div class="signal-bar-fill" id="signal-bar" style="width:0%"></div>
+      </div>
+    </div>
 
+    <!-- Stats row -->
+    <div class="stats">
+      <div class="stat"><div class="stat-num blue" id="stat-total">0</div><div class="stat-lbl">Reviewed</div></div>
+      <div class="stat"><div class="stat-num red" id="stat-signals">0</div><div class="stat-lbl">Signals</div><div class="stat-sub">Require action</div></div>
+      <div class="stat"><div class="stat-num green" id="stat-noise">0</div><div class="stat-lbl">Noise</div><div class="stat-sub">No action needed</div></div>
+      <div class="stat"><div class="stat-num" style="color:#fb923c" id="stat-critical">0</div><div class="stat-lbl">P0 / P1</div><div class="stat-sub">Critical</div></div>
+    </div>
+
+    <!-- Category breakdown -->
+    <h2>Category Breakdown</h2>
+    <div class="cat-grid" id="cat-grid"></div>
+
+    <!-- Key points -->
+    <h2>What You Need to Know</h2>
+    <ul class="key-points" id="key-points"></ul>
+
+    <!-- Top actions -->
     <h2>Top Actions for Today</h2>
     <div class="actions-box"><ol id="top-actions"></ol></div>
 
@@ -223,13 +274,80 @@ async function analyze() {
 }
 
 function renderReport(r) {
-  document.getElementById('stat-total').textContent    = r.total_items;
-  document.getElementById('stat-signals').textContent  = r.signals.length;
-  document.getElementById('stat-noise').textContent    = r.noise.length;
-  document.getElementById('stat-critical').textContent = r.signals.filter(s => s.priority >= 8).length;
+  const total    = r.total_items;
+  const signals  = r.signals.length;
+  const noise    = r.noise.length;
+  const critical = r.signals.filter(s => s.priority >= 8).length;
+  const signalPct = total ? Math.round(signals / total * 100) : 0;
 
-  document.getElementById('summary').textContent = r.executive_summary;
+  // Stats
+  document.getElementById('stat-total').textContent    = total;
+  document.getElementById('stat-signals').textContent  = signals;
+  document.getElementById('stat-noise').textContent    = noise;
+  document.getElementById('stat-critical').textContent = critical;
 
+  // Health banner
+  const banner = document.getElementById('health-banner');
+  const icon   = document.getElementById('health-icon');
+  const title  = document.getElementById('health-title');
+  const sub    = document.getElementById('health-sub');
+  if (critical > 0) {
+    banner.className = 'health-banner red';
+    icon.textContent = '🔴';
+    title.textContent = 'Immediate Attention Required';
+    sub.textContent  = `${critical} critical signal${critical>1?'s':''} (P0/P1) need action now — ${signalPct}% of items reviewed are signals.`;
+  } else if (signals > 0) {
+    banner.className = 'health-banner yellow';
+    icon.textContent = '🟡';
+    title.textContent = 'Action Needed This Week';
+    sub.textContent  = `No critical blockers, but ${signals} signal${signals>1?'s':''} require follow-up — ${signalPct}% of items reviewed are signals.`;
+  } else {
+    banner.className = 'health-banner green';
+    icon.textContent = '🟢';
+    title.textContent = 'All Clear';
+    sub.textContent  = 'No signals detected. All items reviewed are noise — no action required.';
+  }
+
+  // Signal ratio bar
+  document.getElementById('signal-bar').style.width = signalPct + '%';
+  document.getElementById('bar-signal-pct').textContent = signalPct + '% signals (' + signals + ' items need review)';
+  document.getElementById('bar-noise-pct').textContent  = (100-signalPct) + '% noise (' + noise + ' items safe to ignore)';
+
+  // Category breakdown
+  const catCounts = {};
+  r.signals.forEach(s => {
+    const k = s.signal_category || 'unknown';
+    catCounts[k] = (catCounts[k]||0) + 1;
+  });
+  const catGrid = document.getElementById('cat-grid');
+  catGrid.innerHTML = '';
+  Object.entries(catCounts).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => {
+    const chip = document.createElement('div');
+    chip.className = 'cat-chip';
+    chip.innerHTML = `<span class="cat-tag ${CAT_CLASS[k]||''}">${CAT_LABEL[k]||k}</span><span class="cat-chip-count">${v}</span><span class="cat-chip-label">${v===1?'item':'items'}</span>`;
+    catGrid.appendChild(chip);
+  });
+  if (noise > 0) {
+    const chip = document.createElement('div');
+    chip.className = 'cat-chip';
+    chip.innerHTML = `<span class="cat-tag" style="background:#0f1a0f;color:#4ade80">Noise</span><span class="cat-chip-count">${noise}</span><span class="cat-chip-label">items</span>`;
+    catGrid.appendChild(chip);
+  }
+
+  // Key points — split executive summary into sentences
+  const sentences = r.executive_summary
+    .split(/(?<=[.!?])\s+/)
+    .map(s => s.trim()).filter(Boolean);
+  const icons = ['📌','⚠️','💡','📊','🔎'];
+  const kpList = document.getElementById('key-points');
+  kpList.innerHTML = '';
+  sentences.forEach((s, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="kp-icon">${icons[i%icons.length]}</span><span>${s}</span>`;
+    kpList.appendChild(li);
+  });
+
+  // Top actions
   const ol = document.getElementById('top-actions');
   ol.innerHTML = '';
   (r.top_actions || []).forEach(a => {
