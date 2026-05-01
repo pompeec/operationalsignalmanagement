@@ -372,9 +372,9 @@ async function analyze() {
     });
     clearTimeout(timeout);
     const data = await res.json();
-    if (res.status === 429) { setStatus('⛔ ' + data.error); updateLimitBar(0); return; }
+    if (res.status === 429) { setStatus('⛔ ' + data.error); updateLimitBar(0, true); return; }
     if (data.error) { setStatus('Error: ' + data.error); return; }
-    updateLimitBar(data.runs_remaining);
+    updateLimitBar(data.runs_remaining, true);
     renderReport(data);
     setStatus('');
   } catch(e) {
@@ -602,22 +602,29 @@ function drillDown(filter) {
   }
 }
 
-function updateLimitBar(remaining) {
+function updateLimitBar(remaining, showBar) {
   const bar = document.getElementById('limit-bar');
   const dot = document.getElementById('limit-dot');
   const txt = document.getElementById('limit-text');
-  bar.style.display = 'flex';
+  const btn = document.getElementById('btn-analyze');
   if (remaining <= 0) {
+    bar.style.display = 'flex';
     dot.className = 'limit-dot empty';
     txt.textContent = 'Demo limit reached — no runs remaining.';
-    document.getElementById('btn-analyze').disabled = true;
-    document.getElementById('btn-analyze').style.opacity = '0.4';
-  } else if (remaining === 1) {
-    dot.className = 'limit-dot warn';
-    txt.textContent = remaining + ' demo run remaining.';
+    btn.disabled = true;
+    btn.style.opacity = '0.4';
+    btn.style.cursor = 'not-allowed';
   } else {
-    dot.className = 'limit-dot';
-    txt.textContent = remaining + ' demo runs remaining.';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
+    if (showBar) {
+      bar.style.display = 'flex';
+      dot.className = remaining === 1 ? 'limit-dot warn' : 'limit-dot';
+      txt.textContent = remaining + ' demo run' + (remaining === 1 ? '' : 's') + ' remaining.';
+    } else {
+      bar.style.display = 'none';
+    }
   }
 }
 
@@ -625,7 +632,8 @@ async function checkLimit() {
   try {
     const res = await fetch('/status');
     const data = await res.json();
-    updateLimitBar(data.runs_remaining);
+    // Only show bar if visitor has already used at least one run
+    updateLimitBar(data.runs_remaining, data.runs_used > 0);
   } catch(e) {}
 }
 
