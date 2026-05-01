@@ -40,16 +40,6 @@ MOCK_ITEMS = [
     {"id": "018", "source": "slack",     "text": "Legal has put a hold on the vendor contract for the new observability tool — procurement approval needed before we can proceed"},
     {"id": "019", "source": "datadog",   "text": "CDN cache hit rate dropped from 94% to 61% in the last hour — origin servers receiving 2.4x normal load"},
     {"id": "020", "source": "email",     "text": "Weekly team newsletter: Q2 company picnic scheduled for June 14th, RSVP by May 30th."},
-    {"id": "021", "source": "pagerduty", "text": "SSL certificate for api.prod.example.com expires in 6 days — auto-renewal failed due to DNS misconfiguration"},
-    {"id": "022", "source": "slack",     "text": "Design team shared updated brand guidelines doc. No changes to product UI required at this time."},
-    {"id": "023", "source": "jira",      "text": "Two senior engineers submitted resignation letters this week — team will be at 60% capacity during Q3 critical delivery"},
-    {"id": "024", "source": "grafana",   "text": "p99 API response time across all endpoints within normal range at 340ms. No anomalies detected."},
-    {"id": "025", "source": "slack",     "text": "Customer Success flagged 4 enterprise accounts reporting intermittent login failures since this morning — no ticket raised yet"},
-    {"id": "026", "source": "email",     "text": "Monthly cloud cost report attached. No significant variance from last month. Shared for your records."},
-    {"id": "027", "source": "jira",      "text": "Security audit found a SQL injection vulnerability in the admin panel — exploitable without authentication. Severity: Critical."},
-    {"id": "028", "source": "confluence","text": "Sprint retrospective notes from last week published. Team morale good, no blockers flagged in retro."},
-    {"id": "029", "source": "slack",     "text": "Third-party identity provider (Okta) is reporting a global outage — all SSO-based logins are currently failing across all our products"},
-    {"id": "030", "source": "email",     "text": "Engineering manager reminded team to submit timesheets by EOD Friday. Standard monthly reminder."},
 ]
 
 HTML = """<!DOCTYPE html>

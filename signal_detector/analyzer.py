@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
@@ -149,29 +150,36 @@ class SignalAnalyzer:
     def __init__(self, api_key: str | None = None) -> None:
         self._client = anthropic.Anthropic(api_key=api_key)
 
-    def analyze_item(self, item: InputItem) -> AnalyzedItem:
-        """Classify a single item as signal or noise."""
+    def analyze_item(self, item: InputItem, retries: int = 3) -> AnalyzedItem:
+        """Classify a single item as signal or noise, with retry on rate limit."""
         user_content = self._build_user_message(item)
 
-        response = self._client.messages.create(
-            model=MODEL,
-            max_tokens=1024,
-            system=[
-                {
-                    "type": "text",
-                    "text": _SYSTEM_PROMPT,
-                    "cache_control": {"type": "ephemeral"},
-                }
-            ],
-            tools=[_CLASSIFY_TOOL],
-            tool_choice={"type": "tool", "name": "classify_item"},
-            messages=[{"role": "user", "content": user_content}],
-        )
+        for attempt in range(retries):
+            try:
+                response = self._client.messages.create(
+                    model=MODEL,
+                    max_tokens=1024,
+                    system=[
+                        {
+                            "type": "text",
+                            "text": _SYSTEM_PROMPT,
+                            "cache_control": {"type": "ephemeral"},
+                        }
+                    ],
+                    tools=[_CLASSIFY_TOOL],
+                    tool_choice={"type": "tool", "name": "classify_item"},
+                    messages=[{"role": "user", "content": user_content}],
+                )
+                tool_input = self._extract_tool_input(response)
+                return self._build_analyzed_item(item, tool_input)
+            except anthropic.RateLimitError:
+                if attempt == retries - 1:
+                    raise
+                time.sleep(2 ** attempt)  # 1s, 2s, 4s backoff
 
-        tool_input = self._extract_tool_input(response)
-        return self._build_analyzed_item(item, tool_input)
+        raise RuntimeError("analyze_item failed after retries")
 
-    def analyze_batch(self, items: list[InputItem], max_workers: int = 5) -> AnalysisReport:
+    def analyze_batch(self, items: list[InputItem], max_workers: int = 3) -> AnalysisReport:
         """Classify a batch of items in parallel and produce a full analysis report."""
         analyzed: list[AnalyzedItem] = [None] * len(items)  # type: ignore[list-item]
 
