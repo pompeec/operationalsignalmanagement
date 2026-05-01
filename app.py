@@ -167,7 +167,7 @@ HTML = """<!DOCTYPE html>
 <header>
   <h1>Signal Detector</h1>
   <p>Classifies production issues and provides a summary to update on <strong style="color:#f87171">signal</strong> (requires action) and <strong style="color:#4ade80">noise</strong> (can be safely deprioritized).</p>
-  <p style="margin-top:6px;font-size:0.75rem;color:#334155;">Powered by an expert PM analyst AI — trained to think like a program manager, not just a classifier.</p>
+  <p style="margin-top:6px;font-size:0.75rem;color:#334155;">Powered by an expert PM analyst AI.</p>
 </header>
 <main>
   <div id="limit-bar" class="limit-bar" style="display:none">
