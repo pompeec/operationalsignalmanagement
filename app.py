@@ -32,6 +32,24 @@ MOCK_ITEMS = [
     {"id": "010", "source": "datadog",   "text": "Disk usage on logging-node-07 at 72% — slow upward trend, not urgent"},
     {"id": "011", "source": "slack",     "text": "AWS Q2 budget at 78% with 2 months left, on track to overshoot by $45K"},
     {"id": "012", "source": "email",     "text": "FYI: contractor agreement template updated with new IP clauses. No action needed for existing contracts."},
+    {"id": "013", "source": "pagerduty", "text": "Database primary replica in us-east-1 reporting replication lag of 47 seconds and rising — read queries returning stale data"},
+    {"id": "014", "source": "slack",     "text": "Mobile app v3.2.1 released to App Store yesterday. No issues reported so far, just sharing the update."},
+    {"id": "015", "source": "jira",      "text": "Q3 release milestone has 12 open P1 bugs with 6 days to go. Burn rate suggests only 7 will be resolved by deadline."},
+    {"id": "016", "source": "email",     "text": "On-call engineer for the payments team is on PTO next week — no backup assigned yet during the highest traffic week of the quarter"},
+    {"id": "017", "source": "confluence","text": "Engineering posted updated API documentation for the new events service. No breaking changes, backward compatible."},
+    {"id": "018", "source": "slack",     "text": "Legal has put a hold on the vendor contract for the new observability tool — procurement approval needed before we can proceed"},
+    {"id": "019", "source": "datadog",   "text": "CDN cache hit rate dropped from 94% to 61% in the last hour — origin servers receiving 2.4x normal load"},
+    {"id": "020", "source": "email",     "text": "Weekly team newsletter: Q2 company picnic scheduled for June 14th, RSVP by May 30th."},
+    {"id": "021", "source": "pagerduty", "text": "SSL certificate for api.prod.example.com expires in 6 days — auto-renewal failed due to DNS misconfiguration"},
+    {"id": "022", "source": "slack",     "text": "Design team shared updated brand guidelines doc. No changes to product UI required at this time."},
+    {"id": "023", "source": "jira",      "text": "Two senior engineers submitted resignation letters this week — team will be at 60% capacity during Q3 critical delivery"},
+    {"id": "024", "source": "grafana",   "text": "p99 API response time across all endpoints within normal range at 340ms. No anomalies detected."},
+    {"id": "025", "source": "slack",     "text": "Customer Success flagged 4 enterprise accounts reporting intermittent login failures since this morning — no ticket raised yet"},
+    {"id": "026", "source": "email",     "text": "Monthly cloud cost report attached. No significant variance from last month. Shared for your records."},
+    {"id": "027", "source": "jira",      "text": "Security audit found a SQL injection vulnerability in the admin panel — exploitable without authentication. Severity: Critical."},
+    {"id": "028", "source": "confluence","text": "Sprint retrospective notes from last week published. Team morale good, no blockers flagged in retro."},
+    {"id": "029", "source": "slack",     "text": "Third-party identity provider (Okta) is reporting a global outage — all SSO-based logins are currently failing across all our products"},
+    {"id": "030", "source": "email",     "text": "Engineering manager reminded team to submit timesheets by EOD Friday. Standard monthly reminder."},
 ]
 
 HTML = """<!DOCTYPE html>
@@ -149,12 +167,23 @@ HTML = """<!DOCTYPE html>
   .noise-ignore-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 0.68rem; color: #166534; font-weight: 600; margin-top: 3px; }
   .noise-ignore-pill::before { content: '✓'; font-weight: 900; }
   .src-tag { font-size: 0.72rem; color: #334155; font-weight: 500; }
-  .stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
   .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
-  .stat { background: #0f1117; border: 1px solid #2d3148; border-radius: 10px; padding: 16px 12px; text-align: center; }
+  .stat { background: #0f1117; border: 1px solid #2d3148; border-radius: 10px; padding: 16px 12px; text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; position: relative; }
+  .stat:hover { background: #141824; border-color: #3b4fd8; }
+  .stat.active-all      { border-color: #60a5fa; background: #0c1a2e; }
+  .stat.active-signals  { border-color: #f87171; background: #1a0808; }
+  .stat.active-noise    { border-color: #4ade80; background: #071a0d; }
+  .stat.active-critical { border-color: #fb923c; background: #1a0c05; }
+  .stat-hint { font-size: 0.65rem; color: #334155; margin-top: 4px; }
+  .stat.active-all .stat-hint, .stat.active-signals .stat-hint,
+  .stat.active-noise .stat-hint, .stat.active-critical .stat-hint { color: #64748b; }
   .stat-num { font-size: 2rem; font-weight: 800; line-height: 1; }
   .stat-lbl { font-size: 0.72rem; color: #64748b; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
   .stat-sub { font-size: 0.7rem; color: #334155; margin-top: 2px; }
+  .filter-banner { display: none; font-size: 0.8rem; color: #94a3b8; background: #1a1d2e; border: 1px solid #2d3148; border-radius: 8px; padding: 8px 14px; margin-bottom: 16px; align-items: center; justify-content: space-between; }
+  .filter-banner.visible { display: flex; }
+  .filter-banner button { background: none; border: none; color: #475569; font-size: 0.78rem; cursor: pointer; padding: 0; font-weight: 600; }
+  .filter-banner button:hover { color: #e2e8f0; opacity: 1; }
   .limit-bar { background: #1e293b; border: 1px solid #2d3148; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; font-size: 0.85rem; color: #94a3b8; display: flex; align-items: center; gap: 10px; }
   .limit-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; flex-shrink: 0; }
   .limit-dot.warn { background: #fbbf24; }
@@ -241,24 +270,54 @@ Staff eng building real-time sync without PM sign-off, adds 3-4 weeks to scope">
 
     <!-- Stats row -->
     <div class="stats">
-      <div class="stat"><div class="stat-num blue" id="stat-total">0</div><div class="stat-lbl">Reviewed</div></div>
-      <div class="stat"><div class="stat-num red" id="stat-signals">0</div><div class="stat-lbl">Signals</div><div class="stat-sub">Require action</div></div>
-      <div class="stat"><div class="stat-num green" id="stat-noise">0</div><div class="stat-lbl">Noise</div><div class="stat-sub">No action needed</div></div>
-      <div class="stat"><div class="stat-num" style="color:#fb923c" id="stat-critical">0</div><div class="stat-lbl">P0 / P1</div><div class="stat-sub">Critical</div></div>
+      <div class="stat active-all" id="tile-all" onclick="drillDown('all')">
+        <div class="stat-num blue" id="stat-total">0</div>
+        <div class="stat-lbl">Reviewed</div>
+        <div class="stat-hint">Click to show all</div>
+      </div>
+      <div class="stat" id="tile-signals" onclick="drillDown('signals')">
+        <div class="stat-num red" id="stat-signals">0</div>
+        <div class="stat-lbl">Signals</div>
+        <div class="stat-sub">Require action</div>
+        <div class="stat-hint">Click to filter</div>
+      </div>
+      <div class="stat" id="tile-noise" onclick="drillDown('noise')">
+        <div class="stat-num green" id="stat-noise">0</div>
+        <div class="stat-lbl">Noise</div>
+        <div class="stat-sub">No action needed</div>
+        <div class="stat-hint">Click to filter</div>
+      </div>
+      <div class="stat" id="tile-critical" onclick="drillDown('critical')">
+        <div class="stat-num" style="color:#fb923c" id="stat-critical">0</div>
+        <div class="stat-lbl">P0 / P1</div>
+        <div class="stat-sub">Critical</div>
+        <div class="stat-hint">Click to filter</div>
+      </div>
+    </div>
+    <div class="filter-banner" id="filter-banner">
+      <span id="filter-banner-text"></span>
+      <button onclick="drillDown('all')">✕ Clear filter</button>
     </div>
 
     <!-- Category breakdown -->
-    <h2>Category Breakdown</h2>
-    <div class="cat-grid" id="cat-grid"></div>
+    <div id="cat-section">
+      <h2>Category Breakdown</h2>
+      <div class="cat-grid" id="cat-grid"></div>
+    </div>
 
     <!-- Key points -->
-    <h2>What You Need to Know</h2>
-    <ul class="key-points" id="key-points"></ul>
+    <div id="key-section">
+      <h2>What You Need to Know</h2>
+      <ul class="key-points" id="key-points"></ul>
+    </div>
 
     <!-- Top actions -->
-    <h2>Top Actions for Today</h2>
-    <div class="actions-box" id="top-actions"></div>
+    <div id="actions-section">
+      <h2>Top Actions for Today</h2>
+      <div class="actions-box" id="top-actions"></div>
+    </div>
 
+    <div id="signals-section">
     <h2>🔴 Signals — Requires Attention</h2>
     <div class="severity-legend">
       Severity: <span><span class="p-badge p-p0">P0</span> Active blocker / escalation — act within hours</span>
@@ -271,9 +330,13 @@ Staff eng building real-time sync without PM sign-off, adds 3-4 weeks to scope">
       <tbody id="signals-body"></tbody>
     </table>
 
+    </div><!-- end signals-section -->
+
+    <div id="noise-section">
     <h2>🟢 Noise — Safe to Ignore</h2>
     <p style="font-size:0.8rem;color:#334155;margin:-10px 0 14px">Grouped by category. Click a group to expand. All items reviewed and cleared.</p>
     <div id="noise-list"></div>
+    </div><!-- end noise-section -->
   </div>
 </main>
 
@@ -429,6 +492,7 @@ function renderReport(r) {
     const catKey = s.signal_category || '';
     const sev = severityLabel(s.priority);
     const tr = document.createElement('tr');
+    tr.dataset.priority = s.priority;
     tr.innerHTML = `
       <td><span class="p-badge ${sev.cls}">${sev.label}</span></td>
       <td><span class="cat-tag ${CAT_CLASS[catKey]||''}">${CAT_LABEL[catKey]||catKey}</span></td>
@@ -479,6 +543,8 @@ function renderReport(r) {
     noiseDiv.appendChild(sec);
   });
 
+  _lastReport = r;
+  drillDown('all');
   document.getElementById('results').style.display = 'block';
   document.getElementById('results').scrollIntoView({ behavior:'smooth' });
 }
@@ -488,6 +554,63 @@ function toggleNoise(rowsId, chevId) {
   const chev = document.getElementById(chevId);
   rows.classList.toggle('open');
   chev.classList.toggle('open');
+}
+
+let _lastReport = null;
+
+function drillDown(filter) {
+  if (!_lastReport) return;
+  const r = _lastReport;
+
+  // Update tile active states
+  ['all','signals','noise','critical'].forEach(t => {
+    document.getElementById('tile-' + t).className = 'stat';
+  });
+  document.getElementById('tile-' + filter).classList.add('active-' + filter);
+
+  // Filter banner
+  const banner = document.getElementById('filter-banner');
+  const bannerText = document.getElementById('filter-banner-text');
+  const filterLabels = {
+    all: '', signals: 'Showing signals only', noise: 'Showing noise only', critical: 'Showing P0 / P1 critical signals only'
+  };
+  if (filter === 'all') {
+    banner.classList.remove('visible');
+  } else {
+    bannerText.textContent = filterLabels[filter];
+    banner.classList.add('visible');
+  }
+
+  // Determine which sections to show
+  const showSignals = filter === 'all' || filter === 'signals' || filter === 'critical';
+  const showNoise   = filter === 'all' || filter === 'noise';
+  const showActions = filter === 'all' || filter === 'signals' || filter === 'critical';
+  const showCats    = filter === 'all';
+
+  document.getElementById('signals-table').closest('div,h2')?.parentElement;
+  const signalsSection  = document.getElementById('signals-section');
+  const noiseSection    = document.getElementById('noise-section');
+  const actionsSection  = document.getElementById('actions-section');
+  const catSection      = document.getElementById('cat-section');
+  const keySection      = document.getElementById('key-section');
+
+  signalsSection.style.display = showSignals ? '' : 'none';
+  noiseSection.style.display   = showNoise   ? '' : 'none';
+  actionsSection.style.display = showActions ? '' : 'none';
+  catSection.style.display     = showCats    ? '' : 'none';
+  keySection.style.display     = showCats    ? '' : 'none';
+
+  // Filter signals table rows
+  if (showSignals) {
+    const rows = document.querySelectorAll('#signals-body tr');
+    rows.forEach(row => {
+      if (filter === 'critical') {
+        row.style.display = row.dataset.priority >= 8 ? '' : 'none';
+      } else {
+        row.style.display = '';
+      }
+    });
+  }
 }
 
 function updateLimitBar(remaining) {
