@@ -126,6 +126,22 @@ HTML = """<!DOCTYPE html>
   .noise-item { font-size: 0.875rem; color: #475569; padding: 6px 0; border-bottom: 1px solid #1e2438; display: flex; gap: 10px; }
   .noise-item:last-child { border-bottom: none; }
   .noise-label { font-size: 0.72rem; font-weight: 600; color: #334155; background: #1e293b; padding: 2px 8px; border-radius: 10px; white-space: nowrap; align-self: flex-start; margin-top: 2px; }
+  /* Noise table */
+  .noise-section { background: #0a0f0a; border: 1px solid #1a2e1a; border-radius: 10px; overflow: hidden; margin-bottom: 8px; }
+  .noise-section-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: #0d180d; border-bottom: 1px solid #1a2e1a; cursor: pointer; user-select: none; }
+  .noise-section-header:hover { background: #102010; }
+  .noise-section-title { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; font-weight: 700; color: #4ade80; text-transform: uppercase; letter-spacing: 0.05em; }
+  .noise-count-badge { background: #14532d; color: #4ade80; font-size: 0.7rem; font-weight: 700; padding: 1px 7px; border-radius: 99px; }
+  .noise-chevron { color: #334155; font-size: 0.7rem; transition: transform 0.2s; }
+  .noise-chevron.open { transform: rotate(180deg); }
+  .noise-rows { display: none; }
+  .noise-rows.open { display: block; }
+  .noise-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 10px 16px; border-bottom: 1px solid #0f1f0f; }
+  .noise-row:last-child { border-bottom: none; }
+  .noise-row-text { font-size: 0.85rem; color: #475569; line-height: 1.45; }
+  .noise-row-src { font-size: 0.7rem; color: #1e3a2a; background: #0d180d; border: 1px solid #1a2e1a; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+  .noise-ignore-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 0.68rem; color: #166534; font-weight: 600; margin-top: 3px; }
+  .noise-ignore-pill::before { content: '✓'; font-weight: 900; }
   .src-tag { font-size: 0.72rem; color: #334155; font-weight: 500; }
   .stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
   .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
@@ -227,7 +243,8 @@ Staff eng building real-time sync without PM sign-off, adds 3-4 weeks to scope">
       <tbody id="signals-body"></tbody>
     </table>
 
-    <h3>🟢 Noise — Reviewed, No Action Needed</h3>
+    <h2>🟢 Noise — Safe to Ignore</h2>
+    <p style="font-size:0.8rem;color:#334155;margin:-10px 0 14px">Grouped by category. Click a group to expand. All items reviewed and cleared.</p>
     <div id="noise-list"></div>
   </div>
 </main>
@@ -393,17 +410,56 @@ function renderReport(r) {
     tbody.appendChild(tr);
   });
 
+  // Noise — grouped by category, collapsible sections
   const noiseDiv = document.getElementById('noise-list');
   noiseDiv.innerHTML = '';
+  const noiseGroups = {};
   r.noise.forEach(n => {
-    const d = document.createElement('div');
-    d.className = 'noise-item';
-    d.innerHTML = `<span class="noise-label">${CAT_LABEL[n.noise_category]||n.noise_category||'Noise'}</span><span>${n.summary}</span>`;
-    noiseDiv.appendChild(d);
+    const k = n.noise_category || 'other';
+    if (!noiseGroups[k]) noiseGroups[k] = [];
+    noiseGroups[k].push(n);
+  });
+  const noiseIcons = {
+    routine_update:'📋', administrative:'📅', duplicate_info:'🔁',
+    low_priority:'📌', informational:'ℹ️', other:'📂'
+  };
+  Object.entries(noiseGroups).forEach(([cat, items]) => {
+    const label = CAT_LABEL[cat] || cat;
+    const icon  = noiseIcons[cat] || '📂';
+    const sec   = document.createElement('div');
+    sec.className = 'noise-section';
+    const rowsId = 'noise-rows-' + cat;
+    const chevId = 'noise-chev-' + cat;
+    sec.innerHTML = `
+      <div class="noise-section-header" onclick="toggleNoise('${rowsId}','${chevId}')">
+        <div class="noise-section-title">
+          <span>${icon}</span><span>${label}</span>
+          <span class="noise-count-badge">${items.length}</span>
+        </div>
+        <span class="noise-chevron" id="${chevId}">▼</span>
+      </div>
+      <div class="noise-rows" id="${rowsId}">
+        ${items.map(n => `
+          <div class="noise-row">
+            <div>
+              <div class="noise-row-text">${n.summary}</div>
+              <div class="noise-ignore-pill">Safe to ignore</div>
+            </div>
+            <span class="noise-row-src">${n.source||'—'}</span>
+          </div>`).join('')}
+      </div>`;
+    noiseDiv.appendChild(sec);
   });
 
   document.getElementById('results').style.display = 'block';
   document.getElementById('results').scrollIntoView({ behavior:'smooth' });
+}
+
+function toggleNoise(rowsId, chevId) {
+  const rows = document.getElementById(rowsId);
+  const chev = document.getElementById(chevId);
+  rows.classList.toggle('open');
+  chev.classList.toggle('open');
 }
 
 function updateLimitBar(remaining) {
