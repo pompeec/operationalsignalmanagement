@@ -3,21 +3,20 @@
 from __future__ import annotations
 
 import os
-import threading
+import secrets
 import uuid
 
 from dotenv import load_dotenv
-from flask import Flask, jsonify, render_template_string, request
+from flask import Flask, jsonify, render_template_string, request, session
 
 load_dotenv()
 
 app = Flask(__name__)
 app.config["TIMEOUT"] = 120
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", secrets.token_hex(32))
 
-# Demo run limit — set via DEMO_LIMIT env var or defaults to 2
+# Demo run limit per visitor — set via DEMO_LIMIT env var or defaults to 2
 DEMO_LIMIT = int(os.environ.get("DEMO_LIMIT", 2))
-_run_count = 0
-_run_lock = threading.Lock()
 
 MOCK_ITEMS = [
     {"id": "001", "source": "pagerduty", "text": "Payments service timing out for all EU users since 14:47 UTC — 100% failure rate on /api/payments"},
@@ -639,7 +638,7 @@ async function loadMock() {
   const res = await fetch('/mock-items');
   const items = await res.json();
   document.getElementById('input').value = items.map(i => i.text).join('\\n---\\n');
-  setStatus('12 mock scenarios loaded. Click Analyze to run.');
+  setStatus(items.length + ' mock scenarios loaded. Click Analyze to run.');
 }
 
 window.addEventListener('load', checkLimit);
@@ -667,20 +666,19 @@ def mock_items():
 
 @app.route("/status")
 def status():
-    return jsonify({"runs_used": _run_count, "runs_remaining": max(0, DEMO_LIMIT - _run_count), "limit": DEMO_LIMIT})
+    run_count = session.get("run_count", 0)
+    return jsonify({"runs_used": run_count, "runs_remaining": max(0, DEMO_LIMIT - run_count), "limit": DEMO_LIMIT})
 
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
-    global _run_count
-
-    with _run_lock:
-        if _run_count >= DEMO_LIMIT:
-            return jsonify({
-                "error": f"Demo limit reached ({DEMO_LIMIT} runs). Please contact the owner for access."
-            }), 429
-        _run_count += 1
-        run_number = _run_count
+    run_count = session.get("run_count", 0)
+    if run_count >= DEMO_LIMIT:
+        return jsonify({
+            "error": f"Demo limit reached ({DEMO_LIMIT} runs). Please contact the owner for access."
+        }), 429
+    session["run_count"] = run_count + 1
+    run_number = session["run_count"]
 
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
@@ -707,6 +705,7 @@ def analyze():
     except Exception as e:
         with _run_lock:
             _run_count -= 1  # refund the run if it failed
+        session["run_count"] = max(0, session.get("run_count", 1) - 1)  # refund on failure
         return jsonify({"error": str(e)}), 500
 
 
