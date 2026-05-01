@@ -43,9 +43,14 @@ HTML = """<!DOCTYPE html>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; }
-  header { background: #1a1d2e; border-bottom: 1px solid #2d3148; padding: 20px 32px; display: flex; align-items: center; gap: 16px; }
-  header h1 { font-size: 1.25rem; font-weight: 700; color: #fff; }
-  header span { font-size: 0.85rem; color: #64748b; }
+  header { background: #1a1d2e; border-bottom: 1px solid #2d3148; padding: 18px 32px; }
+  header h1 { font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 2px; }
+  header p  { font-size: 0.82rem; color: #475569; margin: 0; }
+  .how-it-works { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+  .how-step { background: #0f1117; border: 1px solid #2d3148; border-radius: 10px; padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start; }
+  .how-step-icon { font-size: 1.4rem; flex-shrink: 0; }
+  .how-step-title { font-size: 0.8rem; font-weight: 700; color: #e2e8f0; margin-bottom: 3px; }
+  .how-step-desc  { font-size: 0.75rem; color: #475569; line-height: 1.45; }
   .badge { background: #3b4fd8; color: #fff; font-size: 0.7rem; font-weight: 600; padding: 3px 8px; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
   main { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
   .card { background: #1a1d2e; border: 1px solid #2d3148; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
@@ -160,17 +165,38 @@ HTML = """<!DOCTYPE html>
 </head>
 <body>
 <header>
-  <div>
-    <h1>Signal Detector</h1>
-    <span>Operational Intelligence for Program &amp; Product Managers</span>
-  </div>
-  <span class="badge">Claude AI</span>
+  <h1>Signal Detector</h1>
+  <p>Paste your updates, tickets, alerts, or standup notes — get back a prioritized digest that separates what needs action from what can be ignored.</p>
 </header>
 <main>
   <div id="limit-bar" class="limit-bar" style="display:none">
     <span class="limit-dot" id="limit-dot"></span>
     <span id="limit-text"></span>
   </div>
+  <div class="how-it-works">
+    <div class="how-step">
+      <div class="how-step-icon">📥</div>
+      <div>
+        <div class="how-step-title">Paste your items</div>
+        <div class="how-step-desc">Drop in Slack messages, JIRA tickets, PagerDuty alerts, standups, or emails. Separate each item with <code>---</code>. No formatting needed.</div>
+      </div>
+    </div>
+    <div class="how-step">
+      <div class="how-step-icon">🤖</div>
+      <div>
+        <div class="how-step-title">AI classifies each one</div>
+        <div class="how-step-desc">Each item is analyzed for urgency, category (Blocker, Risk, Escalation…), and a recommended action. Noise is filtered automatically.</div>
+      </div>
+    </div>
+    <div class="how-step">
+      <div class="how-step-icon">🎯</div>
+      <div>
+        <div class="how-step-title">Get a prioritized digest</div>
+        <div class="how-step-desc">Signals are ranked P0–P3. You get an overall health status, category breakdown, and top actions ordered by urgency — ready to act on.</div>
+      </div>
+    </div>
+  </div>
+
   <div class="card">
     <label>Paste your updates, alerts, or tickets</label>
     <textarea id="input" placeholder="Auth service throwing 500s on 5% of login attempts since 2pm...
