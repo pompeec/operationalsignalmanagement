@@ -43,9 +43,10 @@ HTML = """<!DOCTYPE html>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; }
-  header { background: #1a1d2e; border-bottom: 1px solid #2d3148; padding: 18px 32px; }
-  header h1 { font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 2px; }
-  header p  { font-size: 0.82rem; color: #475569; margin: 0; }
+  header { background: #1a1d2e; border-bottom: 1px solid #2d3148; padding: 20px 32px; }
+  header h1 { font-size: 1.4rem; font-weight: 800; color: #ffffff; margin-bottom: 6px; letter-spacing: -0.01em; }
+  header .header-desc { font-size: 0.88rem; color: #cbd5e1; margin: 0 0 5px; line-height: 1.5; }
+  header .header-sub  { font-size: 0.75rem; color: #64748b; margin: 0; }
   .how-it-works { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
   .how-step { background: #0f1117; border: 1px solid #2d3148; border-radius: 10px; padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start; }
   .how-step-icon { font-size: 1.4rem; flex-shrink: 0; }
@@ -166,8 +167,8 @@ HTML = """<!DOCTYPE html>
 <body>
 <header>
   <h1>Signal Detector</h1>
-  <p>Classifies production issues and provides a summary to update on <strong style="color:#f87171">signal</strong> (requires action) and <strong style="color:#4ade80">noise</strong> (can be safely deprioritized).</p>
-  <p style="margin-top:6px;font-size:0.75rem;color:#334155;">Powered by an expert PM analyst AI.</p>
+  <p class="header-desc">Classifies production issues and provides a summary to update on <strong style="color:#f87171">signal</strong> (requires action) and <strong style="color:#4ade80">noise</strong> (can be safely deprioritized).</p>
+  <p class="header-sub">Powered by an expert PM analyst AI.</p>
 </header>
 <main>
   <div id="limit-bar" class="limit-bar" style="display:none">
