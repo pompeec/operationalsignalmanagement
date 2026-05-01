@@ -595,7 +595,7 @@ function drillDown(filter) {
     const rows = document.querySelectorAll('#signals-body tr');
     rows.forEach(row => {
       if (filter === 'critical') {
-        row.style.display = row.dataset.priority >= 8 ? '' : 'none';
+        row.style.display = parseInt(row.dataset.priority, 10) >= 8 ? '' : 'none';
       } else {
         row.style.display = '';
       }
