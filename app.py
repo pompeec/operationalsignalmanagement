@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import os
+import threading
 import uuid
 
 from dotenv import load_dotenv
@@ -13,6 +13,11 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config["TIMEOUT"] = 120
+
+# Demo run limit — set via DEMO_LIMIT env var or defaults to 2
+DEMO_LIMIT = int(os.environ.get("DEMO_LIMIT", 2))
+_run_count = 0
+_run_lock = threading.Lock()
 
 MOCK_ITEMS = [
     {"id": "001", "source": "pagerduty", "text": "Payments service timing out for all EU users since 14:47 UTC — 100% failure rate on /api/payments"},
@@ -89,6 +94,10 @@ HTML = """<!DOCTYPE html>
   .stat { background: #0f1117; border: 1px solid #2d3148; border-radius: 8px; padding: 12px 20px; text-align: center; }
   .stat-num { font-size: 1.5rem; font-weight: 700; }
   .stat-lbl { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+  .limit-bar { background: #1e293b; border: 1px solid #2d3148; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; font-size: 0.85rem; color: #94a3b8; display: flex; align-items: center; gap: 10px; }
+  .limit-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; flex-shrink: 0; }
+  .limit-dot.warn { background: #fbbf24; }
+  .limit-dot.empty { background: #f87171; }
   .red { color: #f87171; } .yellow { color: #fbbf24; } .green { color: #4ade80; } .blue { color: #60a5fa; }
   .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #2d3148; border-top-color: #3b4fd8; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 8px; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -103,6 +112,10 @@ HTML = """<!DOCTYPE html>
   <span class="badge">Claude AI</span>
 </header>
 <main>
+  <div id="limit-bar" class="limit-bar" style="display:none">
+    <span class="limit-dot" id="limit-dot"></span>
+    <span id="limit-text"></span>
+  </div>
   <div class="card">
     <label>Paste your updates, alerts, or tickets</label>
     <textarea id="input" placeholder="Auth service throwing 500s on 5% of login attempts since 2pm...
@@ -189,7 +202,9 @@ async function analyze() {
     });
     clearTimeout(timeout);
     const data = await res.json();
+    if (res.status === 429) { setStatus('⛔ ' + data.error); updateLimitBar(0); return; }
     if (data.error) { setStatus('Error: ' + data.error); return; }
+    updateLimitBar(data.runs_remaining);
     renderReport(data);
     setStatus('');
   } catch(e) {
@@ -238,6 +253,33 @@ function renderReport(r) {
   document.getElementById('results').scrollIntoView({ behavior:'smooth' });
 }
 
+function updateLimitBar(remaining) {
+  const bar = document.getElementById('limit-bar');
+  const dot = document.getElementById('limit-dot');
+  const txt = document.getElementById('limit-text');
+  bar.style.display = 'flex';
+  if (remaining <= 0) {
+    dot.className = 'limit-dot empty';
+    txt.textContent = 'Demo limit reached — no runs remaining.';
+    document.getElementById('btn-analyze').disabled = true;
+    document.getElementById('btn-analyze').style.opacity = '0.4';
+  } else if (remaining === 1) {
+    dot.className = 'limit-dot warn';
+    txt.textContent = remaining + ' demo run remaining.';
+  } else {
+    dot.className = 'limit-dot';
+    txt.textContent = remaining + ' demo runs remaining.';
+  }
+}
+
+async function checkLimit() {
+  try {
+    const res = await fetch('/status');
+    const data = await res.json();
+    updateLimitBar(data.runs_remaining);
+  } catch(e) {}
+}
+
 function setStatus(msg) {
   document.getElementById('status').innerHTML = msg;
 }
@@ -249,6 +291,8 @@ async function loadMock() {
   document.getElementById('input').value = items.map(i => i.text).join('\\n---\\n');
   setStatus('12 mock scenarios loaded. Click Analyze to run.');
 }
+
+window.addEventListener('load', checkLimit);
 
 function clearAll() {
   document.getElementById('input').value = '';
@@ -271,8 +315,23 @@ def mock_items():
     return jsonify(MOCK_ITEMS)
 
 
+@app.route("/status")
+def status():
+    return jsonify({"runs_used": _run_count, "runs_remaining": max(0, DEMO_LIMIT - _run_count), "limit": DEMO_LIMIT})
+
+
 @app.route("/analyze", methods=["POST"])
 def analyze():
+    global _run_count
+
+    with _run_lock:
+        if _run_count >= DEMO_LIMIT:
+            return jsonify({
+                "error": f"Demo limit reached ({DEMO_LIMIT} runs). Please contact the owner for access."
+            }), 429
+        _run_count += 1
+        run_number = _run_count
+
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         return jsonify({"error": "ANTHROPIC_API_KEY not set on the server"}), 500
@@ -292,8 +351,12 @@ def analyze():
             for entry in raw_items
         ]
         report = analyzer.analyze_batch(items)
-        return jsonify(report.model_dump())
+        result = report.model_dump()
+        result["runs_remaining"] = max(0, DEMO_LIMIT - run_number)
+        return jsonify(result)
     except Exception as e:
+        with _run_lock:
+            _run_count -= 1  # refund the run if it failed
         return jsonify({"error": str(e)}), 500
 
 
