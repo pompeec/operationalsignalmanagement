@@ -166,7 +166,7 @@ HTML = """<!DOCTYPE html>
 <body>
 <header>
   <h1>Signal Detector</h1>
-  <p>Paste your updates, tickets, alerts, or standup notes — get back a prioritized digest that separates what needs action from what can be ignored.</p>
+  <p>Classifies production issues and provides a summary to update on <strong style="color:#f87171">signal</strong> (requires action) and <strong style="color:#4ade80">noise</strong> (can be safely deprioritized).</p>
 </header>
 <main>
   <div id="limit-bar" class="limit-bar" style="display:none">
